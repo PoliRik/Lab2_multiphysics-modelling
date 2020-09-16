@@ -1,0 +1,132 @@
+%% Consolidation model
+% Constant T
+
+clc
+clear
+close all
+
+T1=200+273.15; %K
+T_ref=230+273.15; %K
+P=101325; %Pa pressione atmosferica
+E=42.7*10^3; %J/mol
+R=8.314; %J/mol
+f=0.4;
+B=sqrt((2*(sqrt(3)))/pi);
+u_ref=25; %Pa.s @ 230*C
+a_t=exp((E/R)*((1/T1)-(1/T_ref)));
+u=u_ref*a_t;
+u_mf=u/(1-(B*sqrt(f))) %Pa.s
+
+a=(11)*10^-3;
+b=3;
+w=1;
+syms t
+D_ic=(1/(1+(w/b)))*(1+(((5*P)/u_mf)*(1+(w/b))*((a/b)^2))*t).^(1/5);
+
+fplot(t,D_ic,[0 120],'LineWidth',2);
+title('D_{ic} in isothermal compression')
+xlabel('time [s]')
+ylabel('D_{ic}')
+
+t_id=double (solve(D_ic==1))
+
+%%
+% Temperature model + multiphysics
+
+T_m=230+273.15;
+T0=25+273.15;
+L=0.002;% thickness = 2mm 
+alpha=1.3*10^-7; % m^2/s
+
+syms n x t
+
+
+t_step = 0.5;
+t = [0:t_step:50];
+
+for i = 1 : length(t)
+ 
+K{i} = T_m + (2*(T0-T_m)/pi)*symsum( ((1-(-1)^n)/n)*sin(n*pi*x/L)*exp(-alpha*t(i)*(n*pi/L)^2) ,n,1,100);
+AT{i} = exp((E/R)*((1/K{i})-(1/T_ref)));
+Mu{i} = u_ref*AT{i};
+Mu_mf{i} = Mu{i}/(1-B*sqrt(f));
+
+if i == 1
+    INT{i} = (P/Mu_mf{i})*t_step;
+else
+    INT{i} = (P/Mu_mf{i})*t_step;
+    INT{i} = INT{i} + INT{i-1};
+end
+  D_ic2{i}(x) = (1/(1+w/b))*(1+5*(1+w/b)*((a/b)^2)*INT{i})^(1/5);
+  D_ic2_ref(i) = double(D_ic2{i}(L/2));
+end
+
+[minValue,closestIndex] = min(abs(D_ic2_ref-1));
+t_ne2 = t(closestIndex)
+%%
+% plot Dic2 vs time at L/2
+figure
+plot(t(1:closestIndex),D_ic2_ref(1:closestIndex),'LineWidth',2)
+grid on
+title('D_{ic} in the middle point of the component')
+xlabel('time [s]')
+ylabel('D_{ic}')
+
+% plot Dic2 vs thickness when Dic2_ref=1
+figure
+fplot(x,D_ic2{closestIndex},[0,L],'LineWidth',2)
+grid on
+title('D_{ic} at final time')
+xlabel('Thickness [mm]')
+ylabel('D_{ic2}')
+
+%%
+%Second part 
+
+load('DataComsol.mat')  %% Data exported from COMSOL needed 
+
+p1 = 10^6; % Pressure [Pa]
+t_step2 = 0.1;
+t2 = [0:t_step2:2]; %compression time
+
+x2 = TempThickCenter(:,1);
+T2 = TempThickCenter(:,2:end);
+
+for i = 1 : length(x2)
+    for j = 1 : length(t2)
+AT1(i,j) = exp((E/R)*((1/T2(i,j))-(1/T_ref)));
+Mu1(i,j) = u_ref*AT1(i,j);
+Mu_mf1(i,j) = Mu1(i,j)/(1-B*sqrt(f));
+
+if j == 1
+    INT1(i,j) = (p1/Mu_mf1(i,j))*t_step2;
+else
+    INT1(i,j) = (p1/Mu_mf1(i,j))*t_step2;
+    INT1(i,j) = INT1(i,j) + INT1(i,j-1);
+end
+
+  D_ic21(i,j) = (1/(1+w/b))*(1+5*(1+w/b)*((a/b)^2)*INT1(i,j))^(1/5);
+    end
+  %plot(t2,D_ic21(i,:))
+  %hold on
+end
+
+figure
+p=plot(t2,D_ic21(2:10,:),'LineWidth',2);
+
+p(1).Color='r';
+p(2).Color='#77AC30';
+p(3).Color='b';
+p(4).Color='#7E2F8E';
+p(5).Color='m';
+p(6).Color=	'#EDB120';
+p(7).Color='k';
+p(8).Color=	'#D95319';
+p(9).Color=	'#0072BD';
+
+grid on
+lgd=legend({'x=4.5 mm','x=4 mm','x=3.5 mm','x=3 mm','x=2.5 mm','x=2 mm','x=1.5 mm','x=1 mm','x=0.5 mm'},'Location','northwest','NumColumns',2);
+lgd.FontSize = 16;
+xlabel('Time [s]')
+ylabel('D_{ic21}')
+
