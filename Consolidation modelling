@@ -7,7 +7,7 @@ close all
 
 T1=200+273.15; %K
 T_ref=230+273.15; %K
-P=101325; %Pa pressione atmosferica
+P=101325; %Pa atm pressure
 E=42.7*10^3; %J/mol
 R=8.314; %J/mol
 f=0.4;
@@ -24,9 +24,10 @@ syms t
 D_ic=(1/(1+(w/b)))*(1+(((5*P)/u_mf)*(1+(w/b))*((a/b)^2))*t).^(1/5);
 
 fplot(t,D_ic,[0 120],'LineWidth',2);
-title('D_{ic} in isothermal compression')
+%title('D_{ic} in isothermal compression')
 xlabel('time [s]')
 ylabel('D_{ic}')
+grid on
 
 t_id=double (solve(D_ic==1))
 
@@ -68,7 +69,7 @@ t_ne2 = t(closestIndex)
 figure
 plot(t(1:closestIndex),D_ic2_ref(1:closestIndex),'LineWidth',2)
 grid on
-title('D_{ic} in the middle point of the component')
+%title('D_{ic} in the middle point of the component')
 xlabel('time [s]')
 ylabel('D_{ic}')
 
@@ -76,14 +77,14 @@ ylabel('D_{ic}')
 figure
 fplot(x,D_ic2{closestIndex},[0,L],'LineWidth',2)
 grid on
-title('D_{ic} at final time')
+%title('D_{ic} at final time')
 xlabel('Thickness [mm]')
 ylabel('D_{ic2}')
 
 %%
 %Second part 
 
-load('DataComsol.mat')  %% Data exported from COMSOL needed 
+load('DataComsol.mat')
 
 p1 = 10^6; % Pressure [Pa]
 t_step2 = 0.1;
@@ -129,4 +130,3 @@ lgd=legend({'x=4.5 mm','x=4 mm','x=3.5 mm','x=3 mm','x=2.5 mm','x=2 mm','x=1.5 m
 lgd.FontSize = 16;
 xlabel('Time [s]')
 ylabel('D_{ic21}')
-
