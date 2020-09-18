@@ -1,0 +1,38 @@
+%% Parameters influence
+% Constant T
+
+clc
+clear
+close all
+
+for q=1:5
+T1=200+273.15; %K
+T_ref=230+273.15; %K
+P=101325; %Pa atmosferic pressure
+E=42.7*10^3; %J/mol
+R=8.314; %J/mol
+f=0.4;
+B=sqrt((2*(sqrt(3)))/pi);
+u_ref=25; %Pa.s @ 230*C
+a_t=exp((E/R)*((1/T1)-(1/T_ref)));
+u=u_ref*a_t;
+u_mf=u/(1-(B*sqrt(f))) %Pa.s
+
+a=[(8)*10^-3:(1)*10^-3:(12)*10^-3];
+k=[8:1:12];
+b=[1,2,3,4,5];
+w=[0.5,1,1.5,2,2.5];
+syms t
+D_ic=(1/(1+(w(q)/b(3))))*(1+(((5*P)/u_mf)*(1+(w(q)/b(3)))*((a(4)/b(3))^2))*t).^(1/5);
+
+fplot(t,D_ic,[0 120],'LineWidth',1,'DisplayName',sprintf('w = %d',w(q)));
+
+xlabel('time [s]')
+ylabel('D_{ic}')
+
+t_id=double (solve(D_ic==1))
+hold on
+
+end
+legend show
+grid on
